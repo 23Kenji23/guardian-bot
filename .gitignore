@@ -1,0 +1,12 @@
+# configuração e segredos — nunca publique
+guardian.toml
+guardian.env
+.env
+*.env
+guardian-state.json
+guardian-state.json.tmp
+guardian.log
+# python
+__pycache__/
+*.pyc
+.venv/

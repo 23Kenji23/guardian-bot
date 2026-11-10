@@ -1,0 +1,75 @@
+# Guardian — configuração. Copie para guardian.toml e edite.  (Config: copy to guardian.toml and edit.)
+# Nunca coloque senhas/tokens aqui se puder evitar: use as variáveis de ambiente (token_env, password_env).
+
+[guardian]
+language = "pt"            # "pt" ou "en"
+interval = 60              # segundos entre verificações (mínimo 5)
+timeout = 10               # segundos de espera por resposta
+failures_to_alert = 2      # falhas seguidas antes de avisar "fora do ar" (evita alarme falso)
+remind_minutes = 0         # repetir o aviso enquanto continuar fora (0 = não repetir)
+state_file = "guardian-state.json"
+
+# API local somente leitura + página de status. Desligada por padrão.
+[api]
+enabled = false
+host = "127.0.0.1"         # só este aparelho. Use "0.0.0.0" apenas se souber o que está fazendo e defina um token.
+port = 8765
+token_env = ""             # nome de uma variável de ambiente com a senha da API (opcional em 127.0.0.1; obrigatória se houver check "push")
+
+# "Quem vigia o vigia": o Guardian avisa um serviço EXTERNO (ex.: healthchecks.io, Uptime Kuma em modo push) que está vivo.
+# Se os sinais pararem (aparelho desligado, sem internet, Guardian travado), é esse serviço que te avisa.
+[heartbeat]
+enabled = false
+url_env = "GUARDIAN_HEARTBEAT_URL"   # a URL de sinal do serviço externo (é um segredo: fica na variável de ambiente)
+interval = 60                        # segundos entre sinais (10 a 3600)
+
+# ---- o que vigiar (repita o bloco [[check]] quantas vezes quiser) -------------------------------
+
+[[check]]
+name = "Meu site"
+type = "http"
+url = "https://example.com"
+# expect_status = [200]            # padrão: qualquer 200–399
+# contains = "Bem-vindo"           # texto que precisa aparecer na página
+# interval = 30                    # sobrescreve o padrão
+# cert_warn_days = 14              # avisa quando o certificado SSL estiver perto de vencer (0 = não avisar)
+
+# [[check]]
+# name = "Servidor SSH"
+# type = "tcp"
+# host = "meu-servidor.exemplo.com"
+# port = 22
+
+# Check "push": quem dá o sinal é o SEU script/cron (ex.: no fim do backup: curl -fsS -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8765/ping/Backup).
+# O Guardian avisa se o sinal deixar de chegar. Exige [api] enabled = true e token_env. Use /ping/Backup/fail para o script dizer "falhei".
+# [[check]]
+# name = "Backup"
+# type = "push"
+# interval = 86400                 # de quanto em quanto tempo o sinal deve chegar (segundos)
+# grace = 3600                     # folga antes de avisar (segundos; padrão 60)
+
+# ---- onde avisar (ligue os que quiser) ---------------------------------------------------------
+
+# Telegram: crie o bot com @BotFather, guarde o token em GUARDIAN_TELEGRAM_TOKEN e descubra seu chat_id (veja o README).
+[notify.telegram]
+enabled = false
+token_env = "GUARDIAN_TELEGRAM_TOKEN"
+chat_id = ""
+commands = true            # responde /status, /verificar, /pausar e /retomar neste chat (só este chat_id manda)
+
+# Webhook: Discord, Slack, ntfy ou genérico (JSON).
+[notify.webhook]
+enabled = false
+url_env = "GUARDIAN_WEBHOOK_URL"
+format = "generic"         # "generic" | "discord" | "slack" | "ntfy"
+
+# E-mail (SMTP).
+[notify.email]
+enabled = false
+host = "smtp.exemplo.com"
+port = 587
+security = "starttls"      # "starttls" | "ssl" | "none"
+username = ""
+password_env = "GUARDIAN_SMTP_PASSWORD"
+from = "guardian@exemplo.com"
+to = ["voce@exemplo.com"]
